@@ -382,11 +382,17 @@ def get_wallet_balance(user_address: str, max_retries=5, retry_delay=10) -> floa
     return 0.0  # Return a default value or handle accordingly
 
 
-def create_clob_client(funder_address: str) -> ClobClient:
+def create_clob_client(funder_address: str, use_tunnel: bool = False) -> ClobClient:
 
     load_dotenv()
 
-    host = "https://clob.polymarket.com"
+    if use_tunnel:
+        host = "http://localhost:8080"
+        print("Using SSH tunnel for API calls")
+    else:
+        host = "https://clob.polymarket.com"
+        print("Using direct API connection")
+
     private_key = os.getenv("WPK")
     creds = ApiCreds(
         api_key=os.getenv("WPK_CLOB_API_KEY"),

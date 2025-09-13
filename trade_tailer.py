@@ -165,9 +165,9 @@ def process_trades(json_file_path, client, sleep_duration=60, too_long_ago_hours
     time.sleep(10)  # Pause before the next iteration
 
 
-def run_trade_tailer():
+def run_trade_tailer(use_tunnel: bool = False):
     json_file_path = 'tail_trades.json'
-    client = n.create_clob_client('0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4')
+    client = n.create_clob_client('0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4', use_tunnel=use_tunnel)
     # Run the process_trades function continuously in a loop
     while True:
         process_trades(json_file_path, client)

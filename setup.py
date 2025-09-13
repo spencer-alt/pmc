@@ -53,7 +53,11 @@ def main():
             "py-order-utils>=0.3.2",
             "py-clob-client==0.25.0",
             "python-dotenv>=1.0.0",
-            "requests>=2.31.0"
+            "requests>=2.31.0",
+            "web3>=6.0.0",
+            "pandas>=1.5.0",
+            "pymongo>=4.0.0",
+            "dnspython>=2.0.0"
         ]
         
         for package in packages:
@@ -75,6 +79,11 @@ def main():
         from py_clob_client.clob_types import OrderArgs, OrderType, ApiCreds
         from py_clob_client.constants import POLYGON
         from dotenv import load_dotenv
+        from eth_account import Account
+        import pymongo
+        from web3 import Web3
+        import pandas as pd
+        import requests
         print("✓ All imports successful")
     except ImportError as e:
         print(f"✗ Import error: {e}")

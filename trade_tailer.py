@@ -24,11 +24,10 @@ from py_clob_client.clob_types import OrderArgs, OrderType
 # Function to execute trade using create_order
 def create_order(client, price, size, side, asset):
     order_args = OrderArgs(
+        token_id=asset,
         price=price,
-        # make 1 for now
         size=size,
-        side=side,
-        token_id=asset
+        side=side
     )
 
     signed_order = client.create_order(order_args)
@@ -67,9 +66,8 @@ def process_trades(json_file_path, client, sleep_duration=60, too_long_ago_hours
         # if not trade.get('bot_executed', False):  # Default to True if key is missing
 
             my_balance = n.get_wallet_balance('0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4')
-            trade_risk = 0.15
-            risk_size = my_balance * trade_risk
-            print(f'Risk Size USD is: {risk_size}') ## type -> float
+            risk_size = 5
+            print(f'Fixed trade size: ${risk_size}')
             # Extract trade details
             price = client.get_last_trade_price(trade['asset'])
             price = float(price['price'])
@@ -77,6 +75,13 @@ def process_trades(json_file_path, client, sleep_duration=60, too_long_ago_hours
             print(f"current market price is {price}")
             # price = trade['price']
             size = risk_size / price
+            
+            if my_balance < risk_size:
+                print(f"Insufficient balance ({my_balance} USDC) for ${risk_size} trade")
+                trade['bot_executed'] = True
+                with open(json_file_path, 'w') as file:
+                    json.dump(trades, file, indent=4)
+                continue
             side = trade['side']
             asset = trade['asset']
 
@@ -155,14 +160,14 @@ def process_trades(json_file_path, client, sleep_duration=60, too_long_ago_hours
             with open(json_file_path, 'w') as file:
                 json.dump(trades, file, indent=4)
 
-    print("All trades scanned, and updated or passed. Sleeping for 30 seconds.")
+    print("All trades scanned, and updated or passed. Sleeping for 10 seconds.")
     print('----------------------------------------------------------------------')
-    time.sleep(30)  # Pause before the next iteration
+    time.sleep(10)  # Pause before the next iteration
 
 
-def run_trade_tailer():
-    json_file_path = '/Users/joshbazz/Desktop/Bootcamp/Capstone_Project/tail_trades.json'
-    client = n.create_clob_client('0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4')
+def run_trade_tailer(use_tunnel: bool = False):
+    json_file_path = 'tail_trades.json'
+    client = n.create_clob_client('0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4', use_tunnel=use_tunnel)
     # Run the process_trades function continuously in a loop
     while True:
         process_trades(json_file_path, client)

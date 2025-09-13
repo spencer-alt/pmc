@@ -16,7 +16,6 @@ from py_clob_client.constants import POLYGON
 from py_clob_client.order_builder.constants import BUY
 from py_clob_client.clob_types import ApiCreds, OrderArgs, OrderType
 
-user_address = '0x9d84ce0306f8551e02efef1680475fc0f1dc1344'
 
 # returns proxy wallet dictionary / saves to proxy_wallets.py
 def fetch_leaderboard() -> list:
@@ -51,7 +50,9 @@ def fetch_leaderboard() -> list:
 # returns dictionary of user address and the USDC value of their account
 def fetch_user_value(user_address: str) -> dict[str, float]:
     # The URL with the query parameter
-    url = f"https://data-api.polymarket.com/value?user={user_address}"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}value?user={user_address}"
 
     # Make the GET request
     response = requests.get(url)
@@ -72,7 +73,9 @@ def fetch_user_positions(user_address: str, limit: int = 10000, offset: int = 0)
     # global all_positions_df
     
     # Define the API endpoint with parameters
-    url = f"https://data-api.polymarket.com/positions?user={user_address}&limit={limit}&offset={offset}"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}positions?user={user_address}&limit={limit}&offset={offset}"
     
     # Initialize an empty DataFrame to store all positions
     all_positions_df = pd.DataFrame()
@@ -118,7 +121,9 @@ def get_active_positions(all_positions: pd.DataFrame) -> pd.DataFrame:
 def fetch_most_recent_trade(user_address: str) -> dict:
 
     # Define the API endpoint with parameters
-    url = f"https://data-api.polymarket.com/activity?user={user_address}&limit=1&offset=0"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}activity?user={user_address}&limit=1&offset=0"
 
     response = requests.get(url)
 
@@ -167,7 +172,9 @@ def save_trade_to_csv(trade, filename='UPDATED_new_trades.csv'):
 # Gets User trade data. Default is 20 most recent trades. Returns a List of Dictionaries
 def fetch_user_activity(user_address: str, limit: int = 20) -> list[dict]:
     # Define the API endpoint with parameters
-    url = f"https://data-api.polymarket.com/activity?user={user_address}&limit={limit}&offset=0"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}activity?user={user_address}&limit={limit}&offset=0"
     
     try:
         # Make the GET request to fetch the user activity data
@@ -271,73 +278,17 @@ def filter_trade_by_size(new_trade: dict, usd_size: int) -> bool:
         return True
 
 
-def trade_type(new_trade: dict, active_positions: pd.DataFrame, usd_size: int = 75) -> bool:
-
+def trade_type(new_trade: dict, active_positions: pd.DataFrame, usd_size: int = 5) -> bool:
     tail_trade = False
-
-    new_trade_asset = new_trade.get('asset')
-    active_positions = active_positions[active_positions['asset'] == new_trade_asset].copy()
-
-    if is_in_position(new_trade, active_positions):
-
-        # NOTE: keep in mind, the open positions may reflect the incoming trade already
-        position_value = active_positions["currentValue"].iloc[0]
-        trade_value = new_trade["usdcSize"]
-        position_pnl = active_positions["percentPnl"].iloc[0]
-
-        if new_trade['side'] == 'BUY':
-            print(f'current_pos value is: {position_value}')
-            print(f'trade value is: {trade_value}')
-            print(f'position unrealized PnL: {position_pnl}')
-            added_percent = (trade_value / position_value)
-            if position_pnl > 0:
-                # we want this trade
-                print(f'user is ADDING to WINNING position')
-                print(f'Size ADDED relative to open position: {round((added_percent * 100), 3)}%')
-                if filter_trade_by_size(new_trade, usd_size):
-                    tail_trade = True
-                else:
-                    tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-            else:
-                # not really sure if we want this trade.. for now, we dont
-                print(f'user is ADDING to LOSING position')
-                print(f'Size ADDED relative to open position: {round((added_percent * 100), 3)}%')
-                tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-
-        elif new_trade['side'] == 'SELL':
-            print(f'current_pos value is: {position_value}')
-            print(f'trade value is: {trade_value}')
-            print(f'position unrealized PnL: {position_pnl}')
-            subtracted_percent = (- trade_value) / position_value
-
-            if position_pnl > 0:
-                # we want to filter this out
-                print(f'user is SELLING WINNING position')
-                print(f'Size SOLD relative to open position: {round((subtracted_percent * 100), 3)}%')
-                tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-            else:
-                # we want to filter this out
-                print(f'user is SELLING LOSING position')
-                print(f'Size SOLD relative to open position: {round((subtracted_percent * 100), 3)}%')
-                tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-
-        else:
-            print('Side not specified, probably a merge or other non-trade action')
-
+    
+    if new_trade['side'] == 'BUY':
+        print(f"BUY trade detected - will copy for ${usd_size}")
+        tail_trade = True
     else:
-        print('This is an opening of a new position, checking Size Filter...')
-        # if the trade is not an open position already, we should take it, if it's over our size threshold
-        if filter_trade_by_size(new_trade, usd_size):
-            tail_trade = True
-            print(f'tail_trade is: {tail_trade}')
-        else:
-            tail_trade = False
-            print(f'tail_trade is: {tail_trade}')
-
+        print(f"SELL trade detected - skipping (only copying BUY trades)")
+        tail_trade = False
+    
+    print(f'tail_trade is: {tail_trade}')
     return tail_trade
 
 
@@ -352,6 +303,13 @@ def send_to_tail_trades(tail_trade: bool, trade_data: dict, file_path: str = 'ta
             # Start with an empty list if the file doesn't exist
             trades = []
 
+        transaction_hash = trade_data.get('transactionHash')
+        if transaction_hash:
+            for existing_trade in trades:
+                if existing_trade.get('transactionHash') == transaction_hash:
+                    print(f"Duplicate trade detected, skipping: {transaction_hash}")
+                    return
+
         trade_data['bot_executed'] = False
         # Append the new trade data
         trades.append(trade_data)
@@ -365,7 +323,8 @@ def send_to_tail_trades(tail_trade: bool, trade_data: dict, file_path: str = 'ta
 
 def connect_to_polygon() -> Web3:
     # Connect to Polygon via an Infura or Alchemy endpoint (or other RPC provider)
-    polygon_rpc_url = "https://polygon-rpc.com"  # You can use Infura or Alchemy URLs as well
+    load_dotenv()
+    polygon_rpc_url = os.getenv("RPC_URL", "https://polygon-rpc.com")
     web3 = Web3(Web3.HTTPProvider(polygon_rpc_url))
 
     if web3.is_connected():
@@ -378,6 +337,7 @@ def connect_to_polygon() -> Web3:
 
 def get_wallet_balance(user_address: str, max_retries=5, retry_delay=10) -> float:
     web3 = connect_to_polygon()
+    load_dotenv()
 
     retries = 0
     while retries < max_retries:
@@ -390,7 +350,7 @@ def get_wallet_balance(user_address: str, max_retries=5, retry_delay=10) -> floa
             print(f"Balance for wallet {user_address}: {balance_matic} MATIC")
 
             # USDC contract address on Polygon
-            usdc_contract_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+            usdc_contract_address = os.getenv("USDC_CONTRACT_ADDRESS", "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174")
 
             # ABI for ERC-20 token balanceOf function
             erc20_abi = [
@@ -431,20 +391,32 @@ def get_wallet_balance(user_address: str, max_retries=5, retry_delay=10) -> floa
     return 0.0  # Return a default value or handle accordingly
 
 
-def create_clob_client(funder_address: str) -> ClobClient:
+def create_clob_client(funder_address: str, use_tunnel: bool = False) -> ClobClient:
 
     load_dotenv()
 
-    host = "https://clob.polymarket.com"
-    key = os.getenv("WPK")
-    funder=funder_address
+    if use_tunnel:
+        host = "http://localhost:8080"
+        print("Using SSH tunnel for API calls")
+    else:
+        host = os.getenv("CLOB_HTTP_URL", "https://clob.polymarket.com")
+        print("Using direct API connection")
+
+    private_key = os.getenv("WPK")
     creds = ApiCreds(
         api_key=os.getenv("WPK_CLOB_API_KEY"),
         api_secret=os.getenv("WPK_CLOB_SECRET"),
         api_passphrase=os.getenv("WPK_CLOB_PASS_PHRASE"),
     )
     chain_id = POLYGON
-    client = ClobClient(host, key=key, chain_id=chain_id, creds=creds, signature_type=1, funder=funder)
+    client = ClobClient(
+        host=host,
+        key=private_key,
+        creds=creds,
+        chain_id=chain_id,
+        signature_type=2,
+        funder=funder_address
+    )
 
     return client
 

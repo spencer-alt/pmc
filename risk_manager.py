@@ -93,10 +93,10 @@ def risk_management_looper(user_address: str):
 def run_risk_manager(user_address):
     while True:
         risk_management_looper(user_address)
-        time.sleep(30)
+        time.sleep(10)
         
 if __name__ == "__main__":
 
     while True:
         risk_management_looper(user_address)
-        time.sleep(30)
+        time.sleep(10)

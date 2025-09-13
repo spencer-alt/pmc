@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from py_clob_client.client import ClobClient
 from py_clob_client.clob_types import OrderArgs, OrderType, ApiCreds
 from py_clob_client.constants import POLYGON
+from eth_account import Account
 
 def create_clob_client(funder_address: str) -> ClobClient:
     '''Create CLOB client for local execution'''
@@ -187,8 +188,18 @@ def main():
     print("This script executes trades locally using your IP address")
     print()
     
-    wallet_address = os.getenv("PROXY_WALLET", "0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4")
-    print(f"Using wallet: {wallet_address}")
+    private_key = os.getenv("WPK")
+    if not private_key:
+        print("Error: WPK (private key) not found in .env file")
+        sys.exit(1)
+    
+    try:
+        account = Account.from_key(private_key)
+        wallet_address = account.address
+        print(f"Using wallet: {wallet_address} (derived from private key)")
+    except Exception as e:
+        print(f"Error deriving wallet address from private key: {e}")
+        sys.exit(1)
     
     trades_file = input("Enter path to trades file (default: tail_trades.json): ").strip()
     if not trades_file:

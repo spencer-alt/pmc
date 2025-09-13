@@ -35,7 +35,7 @@ def monitor_wallet(user_address):
     print(f"Initial trade detected for wallet {user_address}:", last_trade)
     
     while True:
-        time.sleep(30)  # Sleep for 60 seconds
+        time.sleep(10)  # Sleep for 10 seconds
 
         # Fetch the latest user activity
         current_trades = n.fetch_user_activity(user_address)

@@ -161,7 +161,7 @@ def process_trades(json_file_path, client, sleep_duration=60, too_long_ago_hours
 
 
 def run_trade_tailer():
-    json_file_path = '/Users/joshbazz/Desktop/Bootcamp/Capstone_Project/tail_trades.json'
+    json_file_path = 'tail_trades.json'
     client = n.create_clob_client('0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4')
     # Run the process_trades function continuously in a loop
     while True:

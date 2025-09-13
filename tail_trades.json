@@ -1,1 +1,17 @@
-[]
+[
+    {
+        "proxyWallet": "0x88712ac5d0f65592fcccb4708523c8fa6ee5830a",
+        "timestamp": 1757790036,
+        "conditionId": "0xd32ab63ac443d126be2a12ea75ff2ccc2eeb015272cd00bf195ddf38e6f3bca7",
+        "type": "TRADE",
+        "size": 5000,
+        "usdcSize": 2500,
+        "transactionHash": "0x14126dc9b5dee69f2a2748932d839a1dd05bca9dbf5cf1e69d9155801bf9e1f1",
+        "price": 0.5,
+        "asset": "36154994650940048409025465583431998499580993695908461126823705526310399761809",
+        "side": "BUY",
+        "outcomeIndex": 0,
+        "title": "Ethereum Up or Down - September 13, 3PM ET",
+        "bot_executed": false
+    }
+]

@@ -387,15 +387,17 @@ def create_clob_client(funder_address: str) -> ClobClient:
     load_dotenv()
 
     host = "https://clob.polymarket.com"
-    key = os.getenv("WPK_CLOB_API_KEY")
-    secret = os.getenv("WPK_CLOB_SECRET")
-    passphrase = os.getenv("WPK_CLOB_PASS_PHRASE")
+    private_key = os.getenv("WPK")
+    creds = ApiCreds(
+        api_key=os.getenv("WPK_CLOB_API_KEY"),
+        api_secret=os.getenv("WPK_CLOB_SECRET"),
+        api_passphrase=os.getenv("WPK_CLOB_PASS_PHRASE"),
+    )
     chain_id = POLYGON
     client = ClobClient(
         host=host,
-        key=key,
-        secret=secret,
-        passphrase=passphrase,
+        key=private_key,
+        creds=creds,
         chain_id=chain_id,
         signature_type=2,
         funder=funder_address

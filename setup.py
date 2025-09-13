@@ -50,10 +50,10 @@ def main():
             "eth-utils>=4.1.1",
             "eth-account>=0.11.0", 
             "pydantic>=2.0.0",
-            "py-order-utils==0.3.2",
-            "py-clob-client==0.3.0",
-            "python-dotenv==1.0.0",
-            "requests==2.31.0"
+            "py-order-utils>=0.3.2",
+            "py-clob-client==0.25.0",
+            "python-dotenv>=1.0.0",
+            "requests>=2.31.0"
         ]
         
         for package in packages:

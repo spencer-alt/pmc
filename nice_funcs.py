@@ -271,73 +271,17 @@ def filter_trade_by_size(new_trade: dict, usd_size: int) -> bool:
         return True
 
 
-def trade_type(new_trade: dict, active_positions: pd.DataFrame, usd_size: int = 75) -> bool:
-
+def trade_type(new_trade: dict, active_positions: pd.DataFrame, usd_size: int = 5) -> bool:
     tail_trade = False
-
-    new_trade_asset = new_trade.get('asset')
-    active_positions = active_positions[active_positions['asset'] == new_trade_asset].copy()
-
-    if is_in_position(new_trade, active_positions):
-
-        # NOTE: keep in mind, the open positions may reflect the incoming trade already
-        position_value = active_positions["currentValue"].iloc[0]
-        trade_value = new_trade["usdcSize"]
-        position_pnl = active_positions["percentPnl"].iloc[0]
-
-        if new_trade['side'] == 'BUY':
-            print(f'current_pos value is: {position_value}')
-            print(f'trade value is: {trade_value}')
-            print(f'position unrealized PnL: {position_pnl}')
-            added_percent = (trade_value / position_value)
-            if position_pnl > 0:
-                # we want this trade
-                print(f'user is ADDING to WINNING position')
-                print(f'Size ADDED relative to open position: {round((added_percent * 100), 3)}%')
-                if filter_trade_by_size(new_trade, usd_size):
-                    tail_trade = True
-                else:
-                    tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-            else:
-                # not really sure if we want this trade.. for now, we dont
-                print(f'user is ADDING to LOSING position')
-                print(f'Size ADDED relative to open position: {round((added_percent * 100), 3)}%')
-                tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-
-        elif new_trade['side'] == 'SELL':
-            print(f'current_pos value is: {position_value}')
-            print(f'trade value is: {trade_value}')
-            print(f'position unrealized PnL: {position_pnl}')
-            subtracted_percent = (- trade_value) / position_value
-
-            if position_pnl > 0:
-                # we want to filter this out
-                print(f'user is SELLING WINNING position')
-                print(f'Size SOLD relative to open position: {round((subtracted_percent * 100), 3)}%')
-                tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-            else:
-                # we want to filter this out
-                print(f'user is SELLING LOSING position')
-                print(f'Size SOLD relative to open position: {round((subtracted_percent * 100), 3)}%')
-                tail_trade = False
-                print(f'tail_trade is: {tail_trade}')
-
-        else:
-            print('Side not specified, probably a merge or other non-trade action')
-
+    
+    if new_trade['side'] == 'BUY':
+        print(f"BUY trade detected - will copy for ${usd_size}")
+        tail_trade = True
     else:
-        print('This is an opening of a new position, checking Size Filter...')
-        # if the trade is not an open position already, we should take it, if it's over our size threshold
-        if filter_trade_by_size(new_trade, usd_size):
-            tail_trade = True
-            print(f'tail_trade is: {tail_trade}')
-        else:
-            tail_trade = False
-            print(f'tail_trade is: {tail_trade}')
-
+        print(f"SELL trade detected - skipping (only copying BUY trades)")
+        tail_trade = False
+    
+    print(f'tail_trade is: {tail_trade}')
     return tail_trade
 
 
@@ -351,6 +295,13 @@ def send_to_tail_trades(tail_trade: bool, trade_data: dict, file_path: str = 'ta
         else:
             # Start with an empty list if the file doesn't exist
             trades = []
+
+        transaction_hash = trade_data.get('transactionHash')
+        if transaction_hash:
+            for existing_trade in trades:
+                if existing_trade.get('transactionHash') == transaction_hash:
+                    print(f"Duplicate trade detected, skipping: {transaction_hash}")
+                    return
 
         trade_data['bot_executed'] = False
         # Append the new trade data
@@ -436,15 +387,19 @@ def create_clob_client(funder_address: str) -> ClobClient:
     load_dotenv()
 
     host = "https://clob.polymarket.com"
-    key = os.getenv("WPK")
-    funder=funder_address
-    creds = ApiCreds(
-        api_key=os.getenv("WPK_CLOB_API_KEY"),
-        api_secret=os.getenv("WPK_CLOB_SECRET"),
-        api_passphrase=os.getenv("WPK_CLOB_PASS_PHRASE"),
-    )
+    key = os.getenv("WPK_CLOB_API_KEY")
+    secret = os.getenv("WPK_CLOB_SECRET")
+    passphrase = os.getenv("WPK_CLOB_PASS_PHRASE")
     chain_id = POLYGON
-    client = ClobClient(host, key=key, chain_id=chain_id, creds=creds, signature_type=1, funder=funder)
+    client = ClobClient(
+        host=host,
+        key=key,
+        secret=secret,
+        passphrase=passphrase,
+        chain_id=chain_id,
+        signature_type=2,
+        funder=funder_address
+    )
 
     return client
 

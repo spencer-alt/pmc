@@ -67,9 +67,8 @@ def process_trades(json_file_path, client, sleep_duration=60, too_long_ago_hours
         # if not trade.get('bot_executed', False):  # Default to True if key is missing
 
             my_balance = n.get_wallet_balance('0x90e9bF6c345B68eE9fd8D4ECFAddb7Ee4F14c8f4')
-            trade_risk = 0.15
-            risk_size = my_balance * trade_risk
-            print(f'Risk Size USD is: {risk_size}') ## type -> float
+            risk_size = 5
+            print(f'Fixed trade size: ${risk_size}')
             # Extract trade details
             price = client.get_last_trade_price(trade['asset'])
             price = float(price['price'])
@@ -77,6 +76,13 @@ def process_trades(json_file_path, client, sleep_duration=60, too_long_ago_hours
             print(f"current market price is {price}")
             # price = trade['price']
             size = risk_size / price
+            
+            if my_balance < risk_size:
+                print(f"Insufficient balance ({my_balance} USDC) for ${risk_size} trade")
+                trade['bot_executed'] = True
+                with open(json_file_path, 'w') as file:
+                    json.dump(trades, file, indent=4)
+                continue
             side = trade['side']
             asset = trade['asset']
 

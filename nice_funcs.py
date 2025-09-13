@@ -16,7 +16,6 @@ from py_clob_client.constants import POLYGON
 from py_clob_client.order_builder.constants import BUY
 from py_clob_client.clob_types import ApiCreds, OrderArgs, OrderType
 
-user_address = '0x9d84ce0306f8551e02efef1680475fc0f1dc1344'
 
 # returns proxy wallet dictionary / saves to proxy_wallets.py
 def fetch_leaderboard() -> list:
@@ -51,7 +50,9 @@ def fetch_leaderboard() -> list:
 # returns dictionary of user address and the USDC value of their account
 def fetch_user_value(user_address: str) -> dict[str, float]:
     # The URL with the query parameter
-    url = f"https://data-api.polymarket.com/value?user={user_address}"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}value?user={user_address}"
 
     # Make the GET request
     response = requests.get(url)
@@ -72,7 +73,9 @@ def fetch_user_positions(user_address: str, limit: int = 10000, offset: int = 0)
     # global all_positions_df
     
     # Define the API endpoint with parameters
-    url = f"https://data-api.polymarket.com/positions?user={user_address}&limit={limit}&offset={offset}"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}positions?user={user_address}&limit={limit}&offset={offset}"
     
     # Initialize an empty DataFrame to store all positions
     all_positions_df = pd.DataFrame()
@@ -118,7 +121,9 @@ def get_active_positions(all_positions: pd.DataFrame) -> pd.DataFrame:
 def fetch_most_recent_trade(user_address: str) -> dict:
 
     # Define the API endpoint with parameters
-    url = f"https://data-api.polymarket.com/activity?user={user_address}&limit=1&offset=0"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}activity?user={user_address}&limit=1&offset=0"
 
     response = requests.get(url)
 
@@ -167,7 +172,9 @@ def save_trade_to_csv(trade, filename='UPDATED_new_trades.csv'):
 # Gets User trade data. Default is 20 most recent trades. Returns a List of Dictionaries
 def fetch_user_activity(user_address: str, limit: int = 20) -> list[dict]:
     # Define the API endpoint with parameters
-    url = f"https://data-api.polymarket.com/activity?user={user_address}&limit={limit}&offset=0"
+    load_dotenv()
+    base_url = os.getenv("DATA_API_BASE", "https://data-api.polymarket.com/")
+    url = f"{base_url}activity?user={user_address}&limit={limit}&offset=0"
     
     try:
         # Make the GET request to fetch the user activity data
@@ -316,7 +323,8 @@ def send_to_tail_trades(tail_trade: bool, trade_data: dict, file_path: str = 'ta
 
 def connect_to_polygon() -> Web3:
     # Connect to Polygon via an Infura or Alchemy endpoint (or other RPC provider)
-    polygon_rpc_url = "https://polygon-rpc.com"  # You can use Infura or Alchemy URLs as well
+    load_dotenv()
+    polygon_rpc_url = os.getenv("RPC_URL", "https://polygon-rpc.com")
     web3 = Web3(Web3.HTTPProvider(polygon_rpc_url))
 
     if web3.is_connected():
@@ -329,6 +337,7 @@ def connect_to_polygon() -> Web3:
 
 def get_wallet_balance(user_address: str, max_retries=5, retry_delay=10) -> float:
     web3 = connect_to_polygon()
+    load_dotenv()
 
     retries = 0
     while retries < max_retries:
@@ -341,7 +350,7 @@ def get_wallet_balance(user_address: str, max_retries=5, retry_delay=10) -> floa
             print(f"Balance for wallet {user_address}: {balance_matic} MATIC")
 
             # USDC contract address on Polygon
-            usdc_contract_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+            usdc_contract_address = os.getenv("USDC_CONTRACT_ADDRESS", "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174")
 
             # ABI for ERC-20 token balanceOf function
             erc20_abi = [
@@ -390,7 +399,7 @@ def create_clob_client(funder_address: str, use_tunnel: bool = False) -> ClobCli
         host = "http://localhost:8080"
         print("Using SSH tunnel for API calls")
     else:
-        host = "https://clob.polymarket.com"
+        host = os.getenv("CLOB_HTTP_URL", "https://clob.polymarket.com")
         print("Using direct API connection")
 
     private_key = os.getenv("WPK")

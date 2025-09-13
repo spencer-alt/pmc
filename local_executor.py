@@ -20,7 +20,7 @@ def create_clob_client(funder_address: str) -> ClobClient:
     '''Create CLOB client for local execution'''
     load_dotenv()
     
-    host = "https://clob.polymarket.com"
+    host = os.getenv("CLOB_HTTP_URL", "https://clob.polymarket.com")
     private_key = os.getenv("WPK")
     
     if not private_key:
@@ -205,11 +205,12 @@ def main():
     if not trades_file:
         trades_file = "tail_trades.json"
     
-    poll_input = input("Enter poll interval in seconds (default: 10): ").strip()
+    default_interval = int(os.getenv("FETCH_INTERVAL", "10"))
+    poll_input = input(f"Enter poll interval in seconds (default: {default_interval}): ").strip()
     try:
-        poll_interval = int(poll_input) if poll_input else 10
+        poll_interval = int(poll_input) if poll_input else default_interval
     except ValueError:
-        poll_interval = 10
+        poll_interval = default_interval
     
     executor = LocalTradeExecutor(wallet_address)
     executor.run(trades_file, poll_interval)

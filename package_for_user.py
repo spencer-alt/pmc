@@ -21,7 +21,7 @@ def create_user_package():
         'local_executor.py', 
         'requirements.txt',
         '.env.template',
-        'README.md'
+        'README_LOCAL_EXECUTOR.md'
     ]
     
     for file in files_to_copy:

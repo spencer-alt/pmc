@@ -24,11 +24,10 @@ from py_clob_client.clob_types import OrderArgs, OrderType
 # Function to execute trade using create_order
 def create_order(client, price, size, side, asset):
     order_args = OrderArgs(
+        token_id=asset,
         price=price,
-        # make 1 for now
         size=size,
-        side=side,
-        token_id=asset
+        side=side
     )
 
     signed_order = client.create_order(order_args)

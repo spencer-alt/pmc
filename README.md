@@ -1,116 +1,51 @@
-# polymarket_copy_trader
-An automated bot for copying BUY trades from a leader wallet on Polymarket
+# Polymarket Local Execution Package
 
-- **Simplified Usage**: Bot copies all BUY trades for a flat $5 amount
-- **Geographic Fix**: Includes IP routing solution to bypass Cloudflare restrictions
-- **Leader Wallet**: Monitors `0x88712ac5d0f65592fcccb4708523c8fa6ee5830a`
+This package allows you to run the trade execution component of the Polymarket copy trading bot locally on your machine, bypassing geographic restrictions.
 
-## IP Routing Solutions
 
-Due to geographic restrictions, the bot may encounter Cloudflare 403 errors when posting orders. Two solutions are provided:
+1. **Install Python 3.11+** (recommended for compatibility)
 
-### Option 1: SSH Tunnel (Recommended)
-1. **Set up SSH access on your machine:**
-   - Enable SSH server: `sudo systemctl enable ssh && sudo systemctl start ssh`
-   - Configure SSH key authentication (recommended)
-   - Note your machine's IP address or hostname
-
-2. **Run the tunnel setup script:**
+2. **Run setup script:**
    ```bash
-   python setup_ssh_tunnel.py
-   ```
-   - Enter your SSH address when prompted (e.g., `user@192.168.1.100`)
-   - Script will test connectivity and establish tunnel
-   - Keep this script running while bot operates
-
-3. **Run bot with tunnel enabled:**
-   ```bash
-   USE_SSH_TUNNEL=true python main.py
+   python setup.py
    ```
 
-### Option 2: Local Execution
-1. **Run detection in Devin's environment** (monitors leader wallet)
-2. **Run execution locally on your machine:**
+3. **Configure environment:**
+   - Copy `.env.template` to `.env`
+   - Add your private key to the `WPK` field in `.env`
+
+4. **Run the executor:**
    ```bash
-   python run_local.py
+   python local_executor.py
    ```
-3. Trades execute using your IP address, bypassing restrictions
 
-### Troubleshooting
-- **SSH Connection Failed**: Check firewall settings, SSH service status
-- **Tunnel Test Failed**: Verify SSH tunnel is active, check port 8080
-- **403 Errors Persist**: Ensure tunnel is routing correctly, try local execution
-- **No Trades Detected**: Check leader wallet activity, verify bot is monitoring correct address
 
-# Project Setup
+- **Monitors** for new trades from the main bot (running in Devin's environment)
+- **Executes** BUY trades only for a flat $5 amount
+- **Uses your IP address** to bypass Cloudflare geographic restrictions
+- **Marks trades as completed** to prevent duplicates
 
-This guide will help you set up the project environment using the provided `requirements.txt` file.
 
-## Prerequisites
+- `setup.py` - One-time setup script
+- `local_executor.py` - Main execution script
+- `requirements.txt` - Python dependencies
+- `.env.template` - Environment configuration template
+- `README.md` - This file
 
-- Python installed on your machine.
-- A virtual environment (recommended) to keep dependencies isolated.
 
-## Setting Up Your Environment
+- Make sure you're using Python 3.11+
+- Run `python setup.py` to verify all dependencies are installed
 
-### 1. Clone the Repository
+- Check your internet connection
+- Verify your .env file has the correct API credentials
+- Make sure your private key (WPK) is set correctly
 
-Clone the repository to your local machine using:
+- The trades file (`tail_trades.json`) is created by the main bot
+- Make sure the main bot is running and detecting trades
+- Check that the file path is correct when prompted
 
-```bash
-git clone https://github.com/Joshbazz/polymarket_copy_trader.git
-cd polymarket_copy_trader
-```
 
-### 2. Create a Virtual Environment
-
-Create a virtual environment to keep your dependencies isolated:
-
-```bash
-python -m venv venv
-### This will create a directory named venv in your project folder.
-```
-### 3. Activate the Virtual Environment
-
-Activate the virtual environment using the following command:
-
-On Windows:
-```bash
-venv\Scripts\activate
-```
-On macOS/Linux:
-```bash
-source venv/bin/activate
-```
-
-### 4. Install the Required Dependencies
-
-Once your virtual environment is activated, install the required dependencies listed in requirements.txt:
-
-``` bash
-pip install -r requirements.txt
-## This command will install all the packages and their respective versions specified in the requirements.txt file.
-```
-
-### 5. Deactivate the Virtual Environment
-
-When you're done working on the project, you can deactivate the virtual environment using:
-
-``` bash
-deactivate
-```
-
-### Updating Dependencies
-
-If you add new packages or update existing ones, make sure to update the requirements.txt file with:
-```bash
-pip freeze > requirements.txt
-## This will overwrite the old requirements.txt with the current environment's dependencies.
-Troubleshooting
-```
-
-Virtual Environment Not Activating: Ensure you are using the correct activation command for your operating system.
-
-Permission Errors: If you encounter permission errors while installing packages, ensure your terminal or command prompt has the necessary permissions or try running it as an administrator (Windows) or with sudo (macOS/Linux).
-
-Dependency Conflicts: If dependencies conflict during installation, consider updating your virtual environment or reviewing the required package versions.
+If you encounter issues:
+1. Run `python setup.py` to verify your environment
+2. Check that all credentials are correctly set in `.env`
+3. Ensure you're using Python 3.11 or newer
